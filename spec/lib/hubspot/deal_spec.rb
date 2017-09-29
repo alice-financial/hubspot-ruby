@@ -65,6 +65,60 @@ describe Hubspot::Deal do
     end
   end
 
+  describe '.all' do
+    cassette 'all_deals'
+
+    it 'must get all deals' do
+      deals = Hubspot::Deal.all
+
+      expect(deals.size).to eql 100
+
+      first = deals.first
+      last = deals.last
+
+      expect(first).to be_a Hubspot::Deal
+      expect(first.properties['amount']).to be_nil
+      expect(first.properties['dealname']).to be_nil
+      expect(first.properties['dealstage']).to be_nil
+
+      expect(last).to be_a Hubspot::Deal
+      expect(last.properties['amount']).to be_nil
+      expect(last.properties['dealname']).to be_nil
+      expect(last.properties['dealstage']).to be_nil
+    end
+
+    it 'can get specific properties' do
+      deals = Hubspot::Deal.all(properties: ['amount', 'dealname', 'dealstage'])
+      first = deals.first
+      last = deals.last
+
+      expect(first.properties['amount']).to eql '60000'
+      expect(first.properties['dealname']).to eql 'MadKudu'
+      expect(first.properties['dealstage']).to be_nil
+
+      expect(last.properties['amount']).to be_nil
+      expect(last.properties['dealname']).to eql '$username-national'
+      expect(last.properties['dealstage']).to eql 'appointmentscheduled'
+    end
+
+    it 'must filter only 2 deals' do
+      deals = Hubspot::Deal.all(limit: 2)
+      expect(deals.size).to eql 2
+    end
+
+    it 'it must offset the deals' do
+      deal = Hubspot::Deal.all(limit: 1, offset: 18708706).first
+      expect(deal.deal_id).to eql 18708721
+    end
+
+    it 'it must return paging data if requested' do
+      response = Hubspot::Deal.all(limit: 1, paged: true)
+      expect(response['deals'].size).to eql 1
+      expect(response['hasMore']).to be true
+      expect(response['offset']).to be
+    end
+  end
+
   describe '#destroy!' do
     cassette 'destroy_deal'
 
