@@ -9,6 +9,7 @@ module Hubspot
   class Deal
     CREATE_DEAL_PATH = "/deals/v1/deal"
     DEAL_PATH = "/deals/v1/deal/:deal_id"
+    ALL_DEALS_PATH = "/deals/v1/deal/paged"
     RECENT_UPDATED_PATH = "/deals/v1/deal/recent/modified"
     UPDATE_DEAL_PATH = '/deals/v1/deal/:deal_id'
     ASSOCIATE_DEAL_PATH = '/deals/v1/deal/:deal_id/associations/:OBJECTTYPE?id=:objectId'
@@ -61,6 +62,18 @@ module Hubspot
       def recent(opts = {})
         response = Hubspot::Connection.get_json(RECENT_UPDATED_PATH, opts)
         response['results'].map { |d| new(d) }
+      end
+
+      # Get paginated list of all deals.
+      # {https://developers.hubspot.com/docs/methods/deals/get-all-deals}
+      # @param limit [Integer] max number of deals to retrun. Defaults to 100, upper bound of 250.
+      # @param offset [Integer] deal offset at which to start your query.
+      # @param properties [Array] Array of strings for property names, e.g. ['dealname', 'amount']
+      def all(opts = {})
+        paged = opts.delete(:paged) { false }
+        response = Hubspot::Connection.get_json(ALL_DEALS_PATH, opts.merge({includeAssociations: true}))
+        response['deals'].map! { |d| new(d) }
+        paged ? response : response['deals']
       end
       
       # Find all deals associated to a company
